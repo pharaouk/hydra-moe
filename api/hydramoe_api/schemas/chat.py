@@ -4,8 +4,8 @@ This module defines the Pydantic models for the Chat entity. These models are us
 serialization and deserialization.
 """
 
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
 
 class ChatBase(BaseModel):
@@ -24,9 +24,11 @@ class ChatRequest(BaseModel):
     session_id: str
     api_key: str
     model: str
-    temperature: float
-    max_tokens: int
-
+    temperature: float = Field(default= 0.1, gt=0)
+    max_tokens: Optional[int] = Field(default=16, gt=0) 
+    top_p :float = Field(default=0.9, gt=0)
+    top_k : float  = Field(default=0)
+    repetition_penalty : float = Field(default=1.1)
 
 class ChatPair(BaseModel):
     human: str

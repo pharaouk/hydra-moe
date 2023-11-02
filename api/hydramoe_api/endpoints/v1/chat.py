@@ -8,8 +8,8 @@ from hydramoe_api.core.chat_service import ChatService
 from hydramoe_api import schemas
 from http import HTTPStatus
 from typing import AsyncGenerator, Dict, List, Optional, Tuple, Union
-
 router = APIRouter()
+
 
 # try:
 #     import fastchat
@@ -20,7 +20,6 @@ router = APIRouter()
 #     _fastchat_available = False
 
 TIMEOUT_KEEP_ALIVE = 5  # seconds
-
 served_model = None
 engine = None
 
@@ -118,16 +117,6 @@ async def check_length(
     else:
         return input_ids, None
 
-@router.post("/v1/models")
-async def show_available_models():
-    """Show available models. Right now we only have one model."""
-    model_cards = [
-         schemas.ModelCard(id=served_model,
-                  root=served_model,
-                  permission=[schemas.ModelPermission()])
-    ]
-    return schemas.ModelList(data=model_cards)
-
 
 # def create_logprobs(token_ids: List[int],
 #                     id_logprobs: List[Dict[int, float]],
@@ -152,12 +141,6 @@ async def show_available_models():
 #         })
 #     return logprobs
 
-
-
-
-
-
-
 @router.post("/chat", status_code=200)
 async def chat_endpoint(request: schemas.ChatRequest):
     try:
@@ -167,8 +150,6 @@ async def chat_endpoint(request: schemas.ChatRequest):
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         raise
-
-
 
 
 
@@ -200,9 +181,15 @@ async def handle_chat_completion_request(request:schemas.ChatCompletionRequest):
 
         # Send converted request in appropriate format. 
         chat_service.start_service(chat_request)
-
         # Make a new stream_results which does it in the ChatResponse format
-        return StreamingResponse(chat_service.stream_results_oai(request.user), media_type="text/plain")
+        response = chat_service.stream_results_oai(request.user)
+
+        # Check if the response is empty
+        if not response:
+            # If it's empty, send a default message
+            response = "Sorry, I couldn't find an answer to your request."
+
+        return StreamingResponse(response, media_type="text/plain")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         raise
